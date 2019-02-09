@@ -10,7 +10,7 @@ export const addAdminRole = functions.https.onCall(async (request, response) => 
     // if (respuesta && respuesta.token.admin !== true) {
     //     return { error: 'Only admins can add other admins' }
     // }
-    
+
     const userSnap = await db.doc('claims/DDcIA6OG8PTRQiKPFOynLYipKRm1').get();
     let claminP = {};
     if (userSnap.data()) {
@@ -30,15 +30,16 @@ export const addAdminRole = functions.https.onCall(async (request, response) => 
 
 //createdClaims({admin:true})
 export const createdClaims = functions.firestore
-  .document('claims/{userId}')
-  .onWrite(async (snapshot: any, context:any) => {
-    const userSnap = await db.doc(`claims/${context.params.userId}`).get();
-    const userData = await userSnap.data() as any || {};
-    delete userData.updatedAt;
-    return grantClaims(userData, context.params.userId)
+    .document('claims/{userId}')
+    .onWrite(async (snapshot: any, context: any) => {
+        const userSnap = await db.doc(`claims/${context.params.userId}`).get();
+        const userData = await userSnap.data() as any || {};
+        delete userData.updatedAt;
+        return grantClaims(userData, context.params.userId)
 
-  });
+    });
 
-function grantClaims(claims: any, id?: any) {
+async function grantClaims(claims: any, id?: any) {
+    await admin.auth().revokeRefreshTokens(id);
     return admin.auth().setCustomUserClaims(id, claims);
 }
